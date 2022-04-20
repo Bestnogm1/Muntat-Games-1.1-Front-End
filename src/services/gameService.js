@@ -23,7 +23,6 @@ export async function addGame(gameDetails){
   return game.json()
 }
 
-
 export async function getAllGames() {
   return fetch(`${BASE_URL}api/games`, {
     method: 'GET', 
