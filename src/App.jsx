@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate, useRoutes } from "react-router-dom";
 import NavBar from "./components/NavBar/NavBar";
 import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
@@ -22,9 +22,21 @@ const App = () => {
 	const [lobby, setLobby] = useState([]);
 	const [categories, setCategories] = useState([]);
 	const [games, setGames] = useState([]);
+
 	// Other Constants
-	const potentialBackgroundImages = ['https://wallpaperboat.com/wp-content/uploads/2020/08/08/52220/dark-theme-04.jpg', 'https://img.wallpapersafari.com/desktop/1280/1024/57/25/zja5nO.jpg', 'https://cdn.wallpapersafari.com/49/71/2ceG5f.jpg', 'https://wallpaper-mania.com/wp-content/uploads/2018/09/High_resolution_wallpaper_background_ID_77700331849.jpg', 'https://img.freepik.com/free-photo/black-monstera-leaves-background-wallpaper_53876-102420.jpg?w=2000', 'https://wallpapertops.com/walldb/original/c/f/1/1365.jpg', 'https://s3.envato.com/files/220900172/Rain%20On%20Window%20With%20Black%20Background%2003%20Preview.jpg', 'https://t4.ftcdn.net/jpg/01/32/33/79/360_F_132337982_11bhtebolWPLaVglNO2BZudxwD4WGxQ8.jpg', 'https://media.istockphoto.com/photos/wave-of-particles-abstract-wave-dots-in-dark-background-big-data-picture-id1355464281?b=1&k=20&m=1355464281&s=170667a&w=0&h=y6kP6uqj4rHFbDphl8BK1cgLxjDeidQSBLw13wcjRD0=', '']
+	const potentialBackgroundImages = [
+		'https://wallpaperboat.com/wp-content/uploads/2020/08/08/52220/dark-theme-04.jpg',
+		'https://img.wallpapersafari.com/desktop/1280/1024/57/25/zja5nO.jpg',
+		'https://cdn.wallpapersafari.com/49/71/2ceG5f.jpg',
+		'https://wallpaper-mania.com/wp-content/uploads/2018/09/High_resolution_wallpaper_background_ID_77700331849.jpg',
+		'https://img.freepik.com/free-photo/black-monstera-leaves-background-wallpaper_53876-102420.jpg?w=2000',
+		'https://wallpapertops.com/walldb/original/c/f/1/1365.jpg',
+		'https://s3.envato.com/files/220900172/Rain%20On%20Window%20With%20Black%20Background%2003%20Preview.jpg',
+		'https://t4.ftcdn.net/jpg/01/32/33/79/360_F_132337982_11bhtebolWPLaVglNO2BZudxwD4WGxQ8.jpg',
+		'https://media.istockphoto.com/photos/wave-of-particles-abstract-wave-dots-in-dark-background-big-data-picture-id1355464281?b=1&k=20&m=1355464281&s=170667a&w=0&h=y6kP6uqj4rHFbDphl8BK1cgLxjDeidQSBLw13wcjRD0=']
+
 	const navigate = useNavigate();
+
 	// Side Effects
 	useEffect(() => {
 		gameService.getAllGames().then(allGames => setGames(allGames));
@@ -39,12 +51,17 @@ const App = () => {
 		gameService.getCategories().then(categories => setCategories(categories));
 	}, []);
 
-	function handleCreateLobby(newLobby) {
+	const handleCreateLobby = newLobby => {
+		// If The User Is not Logged In, They Can Create A New Lobby Temporarily On Their Machine (Wont Enter The Database & Will Disappear Upon Refresh)
+		if (!user) {
+			setLobby([...lobby, newLobby])
+			return navigate("/")
+		}
 		lobbyService
 			.createLobby(newLobby)
 			.then(createdLobby => {
 				setLobby([...lobby, createdLobby]);
-				navigate("/");
+				navigate("/")
 			})
 			.catch(navigate("/"));
 	}
@@ -63,15 +80,17 @@ const App = () => {
 	const handleGetAllLobby = () => {
 		lobbyService.getAllLobby().then(lobbies => setLobby(lobbies))
 	}
+
 	const handleDeleteLobby = id => {
 		lobbyService
 			.deleteOneLobby(id)
 			.then(deleteOneLobby =>
 				setLobby(lobby.filter(lobby => lobby._id !== deleteOneLobby._id))
-			);
+			)
+			.catch(navigate("/"));
 	};
 
-	function handleEditLobby(lobbyInfo) {
+	const handleEditLobby = lobbyInfo => {
 		lobbyService.updateLobby(lobbyInfo).then(updatedLobby => {
 			const newLobbies = lobby.map(l => {
 				return l._id === updatedLobby._id ? updatedLobby : l;
@@ -81,7 +100,7 @@ const App = () => {
 		navigate("/");
 	}
 
-	function handleCreateGame(game) {
+	const handleCreateGame = game => {
 		gameService.addGame(game);
 		navigate("/");
 	}
@@ -89,17 +108,19 @@ const App = () => {
 	const handleJoin = lobby_id => {
 		lobbyService
 			.joinLobby(lobby_id)
-			.then(res => handleGetAllLobby)
+			.then(() => handleGetAllLobby)
+			.catch(navigate("/"));
 	};
 
 	const handleJoinAndLeave = lobby_id => {
 		lobbyService
 			.joinLobby(lobby_id)
-			.then(res => handleGetAllLobby())
-			.then(() => navigate('/'));
+			.then(() => handleGetAllLobby())
+			.then(() => navigate('/'))
+			.catch(navigate("/"));
 	};
 
-	function chooseRandomBackgroundImage() {
+	const chooseRandomBackgroundImage = () => {
 		let random = Math.floor(Math.random() * 9)
 		return potentialBackgroundImages[random]
 	}
@@ -130,73 +151,39 @@ const App = () => {
 				/>
 				<Route
 					path="/profiles"
-					element={user ? <Profiles /> : <Navigate to="/login" />}
+					element={<Profiles />}
 				/>
 				<Route
 					path="/changePassword"
-					element={
-						user ? (
-							<ChangePassword handleSignupOrLogin={handleSignupOrLogin} />
-						) : (
-							<Navigate to="/login" />
-						)
-					}
+					element={<ChangePassword handleSignupOrLogin={handleSignupOrLogin} />}
 				/>
 				<Route
 					path="/create-lobby"
-					element={
-						user ? (
-							<MakeALobby
-								handleCreateLobby={handleCreateLobby}
-								games={games.games}
-							/>
-						) : (
-							<Navigate to="/login" />
-						)
-					}
+					element={<MakeALobby handleCreateLobby={handleCreateLobby} games={games.games} user={user} />}
 				/>
 				<Route
 					path="/edit-lobby"
-					element={
-						user ? (
-							<EditALobby
-								handleEditLobby={handleEditLobby}
-								games={games.games}
-							/>
-						) : (
-							<Navigate to="/login" />
-						)
-					}
+					element={<EditALobby handleEditLobby={handleEditLobby} games={games.games} />}
 				/>
 				<Route
 					path="/add-game"
-					element={
-						user ? (
-							<AddAGame
-								handleCreateGame={handleCreateGame}
-								categories={categories}
-							/>
-						) : (
-							<Navigate to="/login" />
-						)
-					}
+					element={user ? (
+						<AddAGame handleCreateGame={handleCreateGame} categories={categories} />
+					) : (
+						<Login />
+					)}
 				/>
 				<Route
 					path="/lobby-detail/:lobby_id"
 					element={
-						user ? (
-							<LobbyDetail
-								user={user}
-								handleJoin={handleJoin}
-								lobby={lobby}
-								handleDeleteLobby={handleDeleteLobby}
-								setLobby={setLobby}
-								handleJoinAndLeave={handleJoinAndLeave}
-							/>
-						) : (
-							<Navigate to="/login" />
-						)
-					}
+						<LobbyDetail
+							user={user}
+							handleJoin={handleJoin}
+							lobby={lobby}
+							handleDeleteLobby={handleDeleteLobby}
+							setLobby={setLobby}
+							handleJoinAndLeave={handleJoinAndLeave}
+						/>}
 				/>
 				< Route path='*' element={< PageNotFound />} />
 			</Routes>

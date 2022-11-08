@@ -1,11 +1,9 @@
 import styles from './Landing.module.css'
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import LobbyList from '../LobbyList/LobbyList'
+import { Link } from 'react-router-dom'
 import './Landing.module.css'
-import * as lobbyService from "../../services/lobbyService";
 
-const Landing = ({ user, handleDeleteLobby, handleJoin, lobby, handleGetAllLobby, setLobby, chooseRandomBackgroundImage }) => {
+const Landing = ({ user, handleDeleteLobby, handleJoin, lobby, handleGetAllLobby, chooseRandomBackgroundImage }) => {
 
   return (
     <div className={styles.total_home}>
@@ -13,22 +11,25 @@ const Landing = ({ user, handleDeleteLobby, handleJoin, lobby, handleGetAllLobby
         <h1>Match Making</h1>
         <h1 className={styles.title}> Built For Gamers.</h1>
       </div>
-      {!user ?
-        <div className={styles.header}>
-          <p>Login or Sign-up To Join / Create A Lobby</p>
+      <div className={styles.header}>
+        <p className={styles.details}>
+          Mutant Games is an open source video game lobby service! Users can create and join lobbies to connect with their friends and chat about their favorite video games. Create a lobby to get started, or visit us on Github below to make contributions.
+        </p>
+        {user ? (
+          <></>
+        ) :
+          <p><em>Lobbies created without logging in are only visible on your machine.</em></p>
+        }
+        <div className={styles.btn_container}>
+          <a href="https://github.com/Muntant-Games-1-1/Muntat-Games-1.1-Front-End" rel='noreferrer' target="_blank"><button className={styles.reg_btn}>Github</button></a>
+          <Link to='/create-lobby'><button className={styles.reg_btn}>Create A Lobby</button></Link>
+          {user ? (
+            <Link to="/add-game"><button className={styles.the_btn}>Add A Game</button></Link>
+          ) : (
+            <Link to="/login"><button className={styles.the_btn}>Log-In</button></Link>
+          )}
         </div>
-        :
-        <div className={styles.header}>
-          <p className={styles.details}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam cumque distinctio quo architecto, ullam numquam autem laboriosam nobis, molestias officia sequi non beatae sunt inventore repellendus eum, enim qui repudiandae.
-          </p>
-          <div>
-            <button className={styles.reg_btn}>Button</button>
-            <button className={styles.reg_btn}>My Button Example</button>
-            <button className={styles.the_btn}>Button Here</button>
-          </div>
-        </div>
-      }
+      </div>
       <main className={styles.container}>
         {lobby && lobby.map((lobbies) => (
           <div key={lobbies._id}>
